@@ -45,7 +45,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	     particle_tmp.theta = pos_theta_init(gen);
 	     particle_tmp.weight = 1.0;
 	     // Push generated particle into list
-	     particles.push_back((particle_tmp));
+	     particles.push_back(particle_tmp);
 	}
 #ifdef DEBUG
         std::cout<<"PF init(): Init " << num_particles << " particles." << std::endl;
@@ -56,10 +56,36 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {
-	// TODO: Add measurements to each particle and add random Gaussian noise.
-	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
+	// Add measurements to each particle and add random Gaussian noise.
+	// Useful c++ std functions when adding noise 
+    //  - std::normal_distribution and std::default_random_engine useful.
+    // 
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+
+	// Gaussian distribution data generator
+	std::default_random_engine gen;
+
+    // Prediction
+    // x_{t+1} = x_{t} + (v/\dot{\theta}) \left [  sin(\theta_{t} + \dot{\theta}dt) - sin\theta_{t} \right ]
+    // y_{t+1} = y_{t} + (v/\dot{\theta}) \left [  cos\theta_{t} - cos(\theta_{t} + \dot{\theta}dt) \right ]
+    // \theta_{t+1} = \theta_{t} + \dot\theta dt
+	for (int i=0; i< num_particles; i++) {
+
+	    std::normal_distribution<double> pos_x_noise (particles[i].x, std_pos[0]);
+	    std::normal_distribution<double> pos_y_noise (particles[i].y, std_pos[1]);
+	    std::normal_distribution<double> pos_theta_noise (particles[i].theta, std_pos[2]);
+
+        double tmp = yaw_rate * delta_t;
+	    particles[i].x += velocity * (sin(particles[i].theta+tmp) - sin(particles[i].theta)) / yaw_rate + pos_x_noise(gen);
+	    particles[i].y += velocity * (-cos(particles[i].theta+tmp) + cos(particles[i].theta)) / yaw_rate + pos_y_noise(gen);
+        particles[i].theta += tmp + pos_theta_noise(gen);
+	}
+#ifdef DEBUG
+        std::cout<<"PF prediction(): " << num_particles << " particles." << std::endl;
+        particles_print();
+#endif
+
 
 }
 
