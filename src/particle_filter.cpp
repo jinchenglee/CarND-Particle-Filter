@@ -12,12 +12,42 @@
 
 #include "particle_filter.h"
 
+#ifdef DEBUG
+void ParticleFilter::particles_print() {
+	for (int i=0; i< num_particles; i++) {
+	  std::cout<< "id " << particle_tmp.id
+	     << ", x " << particle_tmp.x
+	     << ", y " << particle_tmp.y
+	     << ", theta " << particle_tmp.theta
+	     << ", weight " << particle_tmp.weight;
+	}
+}
+#endif
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+	std::default_random_engine gen;
+	std::normal_distribution<double> pos_x_init(x, std[0]);
+	std::normal_distribution<double> pos_y_init(y, std[1]);
+	std::normal_distribution<double> pos_theta_init(theta, std[2]);
 
+	num_particles = 10; //TODO: check whether 100 particles is enough.
+	Particle particle_tmp;
+	for (int i=0; i< num_particles; i++) {
+	     particle_tmp.id = i;
+	     particle_tmp.x = pos_x_init(gen);
+	     particle_tmp.y = pos_y_init(gen);
+	     particle_tmp.theta = pos_theta_init(gen);
+	     particle_tmp.weight = 1.0;
+	}
+#ifdef DEBUG
+        std::cout<<"PF init(): Init " << num_particles << "particles."
+        particles_print();
+#endif
+        is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate) {

@@ -107,6 +107,11 @@ public:
 	const bool initialized() const {
 		return is_initialized;
 	}
+
+#ifdef DEBUG
+        void ParticleFilter::particles_print() {
+        }
+#endif
 };
 
 
