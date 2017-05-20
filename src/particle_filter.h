@@ -109,8 +109,7 @@ public:
 	}
 
 #ifdef DEBUG
-        void ParticleFilter::particles_print() {
-        }
+	void particles_print();
 #endif
 };
 

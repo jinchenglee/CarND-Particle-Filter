@@ -15,11 +15,11 @@
 #ifdef DEBUG
 void ParticleFilter::particles_print() {
 	for (int i=0; i< num_particles; i++) {
-	  std::cout<< "id " << particle_tmp.id
-	     << ", x " << particle_tmp.x
-	     << ", y " << particle_tmp.y
-	     << ", theta " << particle_tmp.theta
-	     << ", weight " << particle_tmp.weight;
+	  std::cout<< "id " << particles[i].id
+	     << ", x " << particles[i].x
+	     << ", y " << particles[i].y
+	     << ", theta " << particles[i].theta
+	     << ", weight " << particles[i].weight << std::endl;
 	}
 }
 #endif
@@ -34,7 +34,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	std::normal_distribution<double> pos_y_init(y, std[1]);
 	std::normal_distribution<double> pos_theta_init(theta, std[2]);
 
-	num_particles = 10; //TODO: check whether 100 particles is enough.
+	num_particles = 3; //TODO: check whether 100 particles is enough.
+
 	Particle particle_tmp;
 	for (int i=0; i< num_particles; i++) {
 	     particle_tmp.id = i;
@@ -42,9 +43,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	     particle_tmp.y = pos_y_init(gen);
 	     particle_tmp.theta = pos_theta_init(gen);
 	     particle_tmp.weight = 1.0;
+	     particles.push_back((particle_tmp));
 	}
 #ifdef DEBUG
-        std::cout<<"PF init(): Init " << num_particles << "particles."
+        std::cout<<"PF init(): Init " << num_particles << " particles." << std::endl;
         particles_print();
 #endif
         is_initialized = true;

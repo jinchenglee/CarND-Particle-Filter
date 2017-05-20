@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(PARTICLE_FILTER)
 
+#<<JC>> added
+add_definitions(-DDEBUG)
 
 # Build the particle filter project and solution.
 # Use C++11
