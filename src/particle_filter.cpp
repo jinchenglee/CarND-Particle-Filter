@@ -25,10 +25,11 @@ void ParticleFilter::particles_print() {
 #endif
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
-	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
+	// Set the number of particles. Initialize all particles to first position (based on estimates of
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
-	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+
+	// Gaussian distribution data generator
 	std::default_random_engine gen;
 	std::normal_distribution<double> pos_x_init(x, std[0]);
 	std::normal_distribution<double> pos_y_init(y, std[1]);
@@ -43,12 +44,14 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	     particle_tmp.y = pos_y_init(gen);
 	     particle_tmp.theta = pos_theta_init(gen);
 	     particle_tmp.weight = 1.0;
+	     // Push generated particle into list
 	     particles.push_back((particle_tmp));
 	}
 #ifdef DEBUG
         std::cout<<"PF init(): Init " << num_particles << " particles." << std::endl;
         particles_print();
 #endif
+
         is_initialized = true;
 }
 
