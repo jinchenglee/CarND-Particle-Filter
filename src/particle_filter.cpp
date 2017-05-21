@@ -110,6 +110,38 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
 	//   for the fact that the map's y-axis actually points downwards.)
 	//   http://planning.cs.uiuc.edu/node99.html
+
+    // Go through all particles, one after another
+	for (int i=0; i< num_particles; i++) {
+    
+        // Convert *all* landmark within sensor_range in Map coordinates into 
+        //   observations in vehicle coordinates 
+        LandmarkObs lm_obs_tmp;
+        std::vector<LandmarkObs> lm_in_car_xy;
+
+    	for (int i=0; i< map_landmarks.size(); i++) {
+
+            Map::single_landmark_s  single_landmark_tmp = map_landmarks[i];
+
+            // TODO: Calculate distance between car pos (predicted) vs. landmark
+            // Only continue if distance <= sensor_range
+            distance = ...
+
+            if (distance <= sensor_range) {
+                //TODO: the formula is wrong below, placeholders only for now
+                lm_obs_tmp.id_i = i;
+                lm_obs_tmp.x = single_landmark_tmp.x_f;
+                lm_obs_tmp.y = single_landmark_tmp.y_f;
+
+                lm_in_car_xy.push_back(lm_obs_tmp);
+            }
+        }
+
+        // Data association processing
+        // Clean up the lm_in_car_xy list to contain only those associated landmarks
+
+        // Weight calculation and update
+    }
 }
 
 void ParticleFilter::resample() {
