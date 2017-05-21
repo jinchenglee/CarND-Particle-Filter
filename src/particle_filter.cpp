@@ -1,10 +1,3 @@
-/*
- * particle_filter.cpp
- *
- *  Created on: Dec 12, 2016
- *      Author: Tiffany Huang
- */
-
 #include <random>
 #include <algorithm>
 #include <iostream>
@@ -114,28 +107,60 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // Go through all particles, one after another
 	for (int i=0; i< num_particles; i++) {
     
-        // Convert *all* landmark within sensor_range in Map coordinates into 
-        //   observations in vehicle coordinates 
-        LandmarkObs lm_obs_tmp;
-        std::vector<LandmarkObs> lm_in_car_xy;
-
-    	for (int i=0; i< map_landmarks.size(); i++) {
-
-            Map::single_landmark_s  single_landmark_tmp = map_landmarks[i];
-
-            // TODO: Calculate distance between car pos (predicted) vs. landmark
-            // Only continue if distance <= sensor_range
-            distance = ...
-
-            if (distance <= sensor_range) {
-                //TODO: the formula is wrong below, placeholders only for now
-                lm_obs_tmp.id_i = i;
-                lm_obs_tmp.x = single_landmark_tmp.x_f;
-                lm_obs_tmp.y = single_landmark_tmp.y_f;
-
-                lm_in_car_xy.push_back(lm_obs_tmp);
-            }
+        //
+        // Convert observations in vehicle coordinates to Map coordinates and only
+        //  record those within senor_range. O(M) 
+        //
+        // Not doing the other way (convert world to robot coordinates) because that 
+        //  means converting every landmark (counts of landmarks are more than observations), 
+        //  inefficient compute wise. O(N)
+        //
+        // M observations, N landmarks. N>M.
+        //
+#ifdef DEBUG
+        std::cout << "updateWeights(): obs_in_world conversion." << std::endl;
+#endif
+        Map obs_in_world; // Observation in world coordinates
+    	for (int j=0; j<observations.size(); j++) {
+            Map::single_landmark_s  single_landmark_tmp;
+            single_landmark_tmp.id_i = j;
+            single_landmark_tmp.x_f = particles[i].x + observations[j].x * cos(particles[i].theta)
+                                        - observations[j].y * sin(particles[i].theta);
+            single_landmark_tmp.y_f = particles[i].y + observations[j].x * sin(particles[i].theta)
+                                        + observations[j].y * cos(particles[i].theta);;
+            // Save into list
+            obs_in_world.landmark_list.push_back(single_landmark_tmp);
+#ifdef DEBUG
+            std::cout << single_landmark_tmp.id_i << " " 
+                    << single_landmark_tmp.x_f << " "
+                    << single_landmark_tmp.y_f << std::endl;
+#endif
         }
+
+        //
+        // Calculate distance between car pos (predicted) vs. landmark.
+        // Maintain a list of landmarks of distance <= sensor_range. Only
+        //  the landmark index is required to be recorded.
+        //
+        // O(N)
+        //
+#ifdef DEBUG
+        std::cout << "updateWeights(): finding lm_idx_in_range." << std::endl;
+#endif
+        std::vector<int> lm_idx_in_range; // Indice ofLandmarks within sensor detection range
+    	for (int j=0; j<map_landmarks.landmark_list.size(); j++) {
+            double distance = dist(map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f,
+                                particles[i].x, particles[i].y);
+            if (distance <= sensor_range) 
+                lm_idx_in_range.push_back(j);
+        }
+#ifdef DEBUG
+    	for (int j=0; j<lm_idx_in_range.size(); j++) {
+            std::cout << lm_idx_in_range[j] << " "
+                    << map_landmarks.landmark_list[lm_idx_in_range[j]].x_f << " "
+                    << map_landmarks.landmark_list[lm_idx_in_range[j]].y_f << std::endl;
+        }
+#endif
 
         // Data association processing
         // Clean up the lm_in_car_xy list to contain only those associated landmarks
