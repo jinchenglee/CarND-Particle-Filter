@@ -17,6 +17,10 @@ void ParticleFilter::particles_print() {
 }
 #endif
 
+double ParticleFilter::normpdf(double x, double mu, double std) {
+    return (1.0/sqrt(2*3.1415926)/std)*exp(-0.5*((x-mu)/std)*((x-mu)/std));
+}
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Set the number of particles. Initialize all particles to first position (based on estimates of
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
@@ -75,18 +79,14 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         particles[i].theta += tmp + pos_theta_noise(gen);
 	}
 #ifdef DEBUG
-        std::cout<<"PF prediction(): " << num_particles << " particles." << std::endl;
-        particles_print();
+    std::cout<<"PF prediction(): " << num_particles << " particles." << std::endl;
+    particles_print();
 #endif
-
-
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
 	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
 	//   observed measurement to this particular landmark.
-	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
-	//   implement this method and use it as a helper during the updateWeights phase.
 
 }
 
@@ -106,6 +106,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     // Go through all particles, one after another
 	for (int i=0; i< num_particles; i++) {
+
     
         //
         // Convert observations in vehicle coordinates to Map coordinates and only
@@ -137,6 +138,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 #endif
         }
 
+
+
         //
         // Calculate distance between car pos (predicted) vs. landmark.
         // Maintain a list of landmarks of distance <= sensor_range. Only
@@ -162,11 +165,55 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         }
 #endif
 
-        // Data association processing
-        // Clean up the lm_in_car_xy list to contain only those associated landmarks
 
-        // Weight calculation and update
-    }
+
+        //
+        // Data association - in world coordinates
+        //   J observations
+        //   K landmarks within sensor range
+        //   O(J*K) - loop over
+        //
+#ifdef DEBUG
+        std::cout << "updateWeights(): dataAssociation." << std::endl;
+#endif
+
+        double min_distance = 10000.0; // The init value means nothing.
+        double min_distance_x = 0.0;
+        double min_distance_y = 0.0;
+
+        std::cout << " particle " << i << " weight updated = " << particles[i].weight << std::endl;
+
+        for (int j=0; j<obs_in_world.landmark_list.size();j++) {
+            for (int k=0; k<lm_idx_in_range.size();k++) {
+                // Calculate Euclidean distance (nearest neighbour)
+                double distance = dist( obs_in_world.landmark_list[j].x_f, 
+                            obs_in_world.landmark_list[j].y_f,
+                            map_landmarks.landmark_list[lm_idx_in_range[k]].x_f, 
+                            map_landmarks.landmark_list[lm_idx_in_range[k]].y_f);
+                if ( (j==0) // Start of a certain observed landmark
+                    || (distance < min_distance) ) { // Better candidate found
+                    min_distance = distance;
+                    min_distance_x = std::fabs(map_landmarks.landmark_list[lm_idx_in_range[k]].x_f 
+                                - obs_in_world.landmark_list[j].x_f);
+                    min_distance_y = std::fabs(map_landmarks.landmark_list[lm_idx_in_range[k]].y_f 
+                                - obs_in_world.landmark_list[j].y_f);
+                }
+            }
+            // If obs matches lm perfectly, dist == 0. Thus expectated mean = 0 in normpdf().
+            particles[i].weight *= normpdf(min_distance_x, 0.0, std_landmark[0]) * 
+                            normpdf(min_distance_y, 0.0, std_landmark[1]);
+#ifdef DEBUG
+            std::cout.precision(17);
+            std::cout << " particle " << i << " weight updated = " << std::fixed << particles[i].weight << std::endl;
+#endif
+        }
+#ifdef DEBUG
+        std::cout << " particle " << i << " weight updated = " << particles[i].weight << std::endl;
+#endif
+
+        // Weight normalization and update
+
+    } // <end> Go through each particles
 }
 
 void ParticleFilter::resample() {

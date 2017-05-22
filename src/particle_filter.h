@@ -108,6 +108,14 @@ public:
 		return is_initialized;
 	}
 
+    /**
+    * normpdf(X,mu,sigma) computes the probability function at values x using the
+    * normal distribution with mean mu and standard deviation std. x, mue and 
+    * sigma must be scalar! The parameter std must be positive. 
+    * The normal pdf is y=f(x;mu,std)= 1/(std*sqrt(2pi)) e[ -(x−mu)^2 / 2*std^2 ]
+    */
+    double normpdf(double x, double mu, double std);
+
 #ifdef DEBUG
 	void particles_print();
 #endif
