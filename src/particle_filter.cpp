@@ -239,8 +239,6 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
-    std::vector<Particle> resampled_particles;
-    
     // Collect all the weights into a list.
     std::vector<double> weights;
 	for (int i=0; i< num_particles; i++) {
@@ -260,14 +258,12 @@ void ParticleFilter::resample() {
     std::uniform_int_distribution<int> dist_num_parts(0, num_particles);
     std::uniform_real_distribution<double> weights_gen(0, 2*max_weight);
     
-    // Option to draw with some noise
-    std::normal_distribution<double> noise_x(0,0.003);
-    std::normal_distribution<double> noise_y(0,0.003);
-    std::normal_distribution<double> noise_theta(0,0.0001);
-    
+    std::vector<Particle> resampled_particles;
+
     int index = dist_num_parts(gen);
     double beta = 0.0;
     
+    // Draw the wheel using Sebastian's method
     for (int i =0; i< num_particles; i++)
     {
         beta += weights_gen(gen);
@@ -276,13 +272,10 @@ void ParticleFilter::resample() {
             beta -= weights[index];
             index = (index +1)% num_particles;
         }
-        Particle particle;
-        particle.x = particles[index].x + noise_x(gen);
-        particle.y = particles[index].y + noise_y(gen);
-        particle.theta = particles[index].theta +noise_theta(gen);
-        particle.weight = particles[index].weight;
-        
-        resampled_particles.push_back(particle);
+
+        // No need to introduce noise here in newly gen'ed particle's x/y/z, as
+        //   noise will be introduced anyways in prediction() step.
+        resampled_particles.push_back(particles[index]);
     }
 
     particles = resampled_particles;
