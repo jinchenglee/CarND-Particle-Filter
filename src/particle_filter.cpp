@@ -104,6 +104,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   for the fact that the map's y-axis actually points downwards.)
 	//   http://planning.cs.uiuc.edu/node99.html
 
+    double weight_sum = 0.0;
+
     // Go through all particles, one after another
 	for (int i=0; i< num_particles; i++) {
 
@@ -206,14 +208,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             std::cout.precision(17);
             std::cout << " particle " << i << " weight updated = " << std::fixed << particles[i].weight << std::endl;
 #endif
-        }
+        } // <end> go through each observations
+
+
+        // Accumulate for next step of weight normalization
+        weight_sum += particles[i].weight;
+
 #ifdef DEBUG
         std::cout << " particle " << i << " weight updated = " << particles[i].weight << std::endl;
 #endif
 
-        // Weight normalization and update
-
     } // <end> Go through each particles
+
+    // Weight normalization and update
+	for (int i=0; i< num_particles; i++) {
+        particles[i].weight /= weight_sum;
+#ifdef DEBUG
+        std::cout << " particle " << i << " weight normalized = " << particles[i].weight << std::endl;
+#endif
+    }
+
 }
 
 void ParticleFilter::resample() {
