@@ -183,8 +183,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         double min_distance_x = 0.0;
         double min_distance_y = 0.0;
 
-        std::cout << " particle " << i << " weight updated = " << particles[i].weight << std::endl;
-
         for (int j=0; j<obs_in_world.landmark_list.size();j++) {
             for (int k=0; k<lm_idx_in_range.size();k++) {
                 // Calculate Euclidean distance (nearest neighbour)
@@ -192,7 +190,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                             obs_in_world.landmark_list[j].y_f,
                             map_landmarks.landmark_list[lm_idx_in_range[k]].x_f, 
                             map_landmarks.landmark_list[lm_idx_in_range[k]].y_f);
-                if ( (j==0) // Start of a certain observed landmark
+                if ( (k==0) // Start of a certain observed landmark
                     || (distance < min_distance) ) { // Better candidate found
                     min_distance = distance;
                     min_distance_x = std::fabs(map_landmarks.landmark_list[lm_idx_in_range[k]].x_f 
