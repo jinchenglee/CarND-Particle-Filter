@@ -32,7 +32,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	std::normal_distribution<double> pos_y_init(y, std[1]);
 	std::normal_distribution<double> pos_theta_init(theta, std[2]);
 
-	num_particles = 3; //TODO: check whether 100 particles is enough.
+	// TODO: fine-tune number of particles.
+	//   Experiments showed 300 is on the boundary. Passing sometimes, failing others.
+	//   Set it to 500 to be on the safe side.
+	num_particles = 500;
 
 	Particle particle_tmp;
 	for (int i=0; i< num_particles; i++) {
@@ -69,9 +72,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     // \theta_{t+1} = \theta_{t} + \dot\theta dt
 	for (int i=0; i< num_particles; i++) {
 
-	    std::normal_distribution<double> pos_x_noise (particles[i].x, std_pos[0]);
-	    std::normal_distribution<double> pos_y_noise (particles[i].y, std_pos[1]);
-	    std::normal_distribution<double> pos_theta_noise (particles[i].theta, std_pos[2]);
+	    std::normal_distribution<double> pos_x_noise (0, std_pos[0]);
+	    std::normal_distribution<double> pos_y_noise (0, std_pos[1]);
+	    std::normal_distribution<double> pos_theta_noise (0, std_pos[2]);
 
         double tmp = yaw_rate * delta_t;
 	    particles[i].x += velocity * (sin(particles[i].theta+tmp) - sin(particles[i].theta)) / yaw_rate + pos_x_noise(gen);
