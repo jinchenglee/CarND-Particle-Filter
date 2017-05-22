@@ -88,20 +88,18 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// TODO: Find the predicted measurement that is closest to each observed measurement and assign the 
 	//   observed measurement to this particular landmark.
 
+    // - implemented in a different way. No use of this function.
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
 		std::vector<LandmarkObs> observations, Map map_landmarks) {
-	// TODO: Update the weights of each particle using a mult-variate Gaussian distribution. You can read
-	//   more about this distribution here: https://en.wikipedia.org/wiki/Multivariate_normal_distribution
-	// NOTE: The observations are given in the VEHICLE'S coordinate system. Your particles are located
-	//   according to the MAP'S coordinate system. You will need to transform between the two systems.
-	//   Keep in mind that this transformation requires both rotation AND translation (but no scaling).
-	//   The following is a good resource for the theory:
+	// Update the weights of each particle using a mult-variate Gaussian distribution. 	
+    //
+    // The observations are given in the VEHICLE'S coordinate system while particles are located
+	//   according to the MAP'S coordinate system. Need to transform between the two systems.
+    //
+	//   The following is a good resource for the rotation/translation theory:
 	//   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
-	//   and the following is a good resource for the actual equation to implement (look at equation 
-	//   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account 
-	//   for the fact that the map's y-axis actually points downwards.)
 	//   http://planning.cs.uiuc.edu/node99.html
 
     double weight_sum = 0.0;
@@ -204,7 +202,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                             normpdf(min_distance_y, 0.0, std_landmark[1]);
 #ifdef DEBUG
             std::cout.precision(17);
-            std::cout << " particle " << i << " weight updated = " << std::fixed << particles[i].weight << std::endl;
+            std::cout << " WIP: particle " << i << " weight updated = " << std::fixed << particles[i].weight << ", x_normpdf " << normpdf(min_distance_x,0.0,std_landmark[0]) << ", y_normpdf " << normpdf(min_distance_y,0.0,std_landmark[1]) << std::endl;
 #endif
         } // <end> go through each observations
 
@@ -213,18 +211,23 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         weight_sum += particles[i].weight;
 
 #ifdef DEBUG
+        std::cout.precision(17);
         std::cout << " particle " << i << " weight updated = " << particles[i].weight << std::endl;
 #endif
 
     } // <end> Go through each particles
 
+
+
+    //
     // Weight normalization and update
+    //
 	for (int i=0; i< num_particles; i++) {
         particles[i].weight /= weight_sum;
 #ifdef DEBUG
         std::cout << " particle " << i << " weight normalized = " << particles[i].weight << std::endl;
 #endif
-    }
+    } // <end> weight normalization
 
 }
 
@@ -233,6 +236,57 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
+    std::vector<Particle> resampled_particles;
+    
+    // Collect all the weights into a list.
+    std::vector<double> weights;
+	for (int i=0; i< num_particles; i++) {
+        weights.push_back(particles[i].weight);
+    }
+    //Find the max_weight 
+    double max_weight =  *std::max_element(std::begin(weights), std::end(weights));
+#ifdef DEBUG
+    std::cout << "Resampling(): max_weight = " << max_weight << std::endl;
+#endif
+    
+    // Random number generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    
+    //Uniform random distributions for index and 2*max weight
+    std::uniform_int_distribution<int> dist_num_parts(0, num_particles);
+    std::uniform_real_distribution<double> weights_gen(0, 2*max_weight);
+    
+    // Option to draw with some noise
+    std::normal_distribution<double> noise_x(0,0.003);
+    std::normal_distribution<double> noise_y(0,0.003);
+    std::normal_distribution<double> noise_theta(0,0.0001);
+    
+    int index = dist_num_parts(gen);
+    double beta = 0.0;
+    
+    for (int i =0; i< num_particles; i++)
+    {
+        beta += weights_gen(gen);
+        while (beta > weights[index])
+        {
+            beta -= weights[index];
+            index = (index +1)% num_particles;
+        }
+        Particle particle;
+        particle.x = particles[index].x + noise_x(gen);
+        particle.y = particles[index].y + noise_y(gen);
+        particle.theta = particles[index].theta +noise_theta(gen);
+        particle.weight = particles[index].weight;
+        
+        resampled_particles.push_back(particle);
+    }
+
+    particles = resampled_particles;
+#ifdef DEBUG
+    std::cout<<"Resampling(): " << num_particles << " particles." << std::endl;
+    particles_print();
+#endif
 }
 
 void ParticleFilter::write(std::string filename) {
